@@ -1,199 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
-		<title>New Game Project</title>
-		<style>
-html, body, #canvas {
-	margin: 0;
-	padding: 0;
-	border: 0;
-}
+<head>
+    <!-- Specifies the character encoding for the document -->
+    <meta charset="utf-8">
 
-body {
-	color: white;
-	background-color: black;
-	overflow: hidden;
-	touch-action: none;
-}
+    <!-- Makes the web page responsive by setting the viewport properties -->
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
 
-#canvas {
-	display: block;
-}
+    <!-- Sets the title of the page -->
+    <title>New Game Project</title>
 
-#canvas:focus {
-	outline: none;
-}
+    <!-- CSS styles for the page -->
+    <style>
+        /* Removes margins, padding, and borders for html, body, and the canvas element */
+        html, body, #canvas {
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
 
-#status, #status-splash, #status-progress {
-	position: absolute;
-	left: 0;
-	right: 0;
-}
+        /* Body style: white text on a black background, hides overflow, disables touch action */
+        body {
+            color: white;
+            background-color: black;
+            overflow: hidden;
+            touch-action: none;
+        }
 
-#status, #status-splash {
-	top: 0;
-	bottom: 0;
-}
+        /* Ensures the canvas element occupies its own line and removes focus outline */
+        #canvas {
+            display: block;
+        }
 
-#status {
-	background-color: #242424;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	visibility: hidden;
-}
+        #canvas:focus {
+            outline: none;
+        }
 
-#status-splash {
-	max-height: 100%;
-	max-width: 100%;
-	margin: auto;
-}
+        /* Styles for the loading status and associated elements */
+        #status, #status-splash, #status-progress {
+            position: absolute;
+            left: 0;
+            right: 0;
+        }
 
-#status-progress, #status-notice {
-	display: none;
-}
+        #status, #status-splash {
+            top: 0;
+            bottom: 0;
+        }
 
-#status-progress {
-	bottom: 10%;
-	width: 50%;
-	margin: 0 auto;
-}
+        #status {
+            background-color: #242424;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            visibility: hidden;
+        }
 
-#status-notice {
-	background-color: #5b3943;
-	border-radius: 0.5rem;
-	border: 1px solid #9b3943;
-	color: #e0e0e0;
-	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
-	line-height: 1.3;
-	margin: 0 2rem;
-	overflow: hidden;
-	padding: 1rem;
-	text-align: center;
-	z-index: 1;
-}
-		</style>
-		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
-<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+        #status-splash {
+            max-height: 100%;
+            max-width: 100%;
+            margin: auto;
+        }
 
-	</head>
-	<body>
-		<canvas id="canvas">
-			Your browser does not support the canvas tag.
-		</canvas>
+        #status-progress, #status-notice {
+            display: none;
+        }
 
-		<noscript>
-			Your browser does not support JavaScript.
-		</noscript>
+        #status-progress {
+            bottom: 10%;
+            width: 50%;
+            margin: 0 auto;
+        }
 
-		<div id="status">
-			<img id="status-splash" src="index.png" alt="">
-			<progress id="status-progress"></progress>
-			<div id="status-notice"></div>
-		</div>
+        #status-notice {
+            background-color: #5b3943;
+            border-radius: 0.5rem;
+            border: 1px solid #9b3943;
+            color: #e0e0e0;
+            font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
+            line-height: 1.3;
+            margin: 0 2rem;
+            overflow: hidden;
+            padding: 1rem;
+            text-align: center;
+            z-index: 1;
+        }
+    </style>
 
-		<script src="index.js"></script>
-		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":32034480,"index.wasm":43016933},"focusCanvas":true,"gdextensionLibs":[]};
-const GODOT_THREADS_ENABLED = false;
-const engine = new Engine(GODOT_CONFIG);
+    <!-- Link to the application icon -->
+    <link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+    <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+</head>
+<body>
+    <!-- Canvas element for rendering the game -->
+    <canvas id="canvas">
+        Your browser does not support the canvas tag.
+    </canvas>
 
-(function () {
-	const statusOverlay = document.getElementById('status');
-	const statusProgress = document.getElementById('status-progress');
-	const statusNotice = document.getElementById('status-notice');
+    <!-- Fallback message for browsers with JavaScript disabled -->
+    <noscript>
+        Your browser does not support JavaScript.
+    </noscript>
 
-	let initializing = true;
-	let statusMode = '';
+    <!-- Status overlay to display loading progress or notices -->
+    <div id="status">
+        <img id="status-splash" src="index.png" alt="">
+        <progress id="status-progress"></progress>
+        <div id="status-notice"></div>
+    </div>
 
-	function setStatusMode(mode) {
-		if (statusMode === mode || !initializing) {
-			return;
-		}
-		if (mode === 'hidden') {
-			statusOverlay.remove();
-			initializing = false;
-			return;
-		}
-		statusOverlay.style.visibility = 'visible';
-		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
-		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
-		statusMode = mode;
-	}
+    <!-- Link to the main JavaScript file -->
+    <script src="index.js"></script>
 
-	function setStatusNotice(text) {
-		while (statusNotice.lastChild) {
-			statusNotice.removeChild(statusNotice.lastChild);
-		}
-		const lines = text.split('\n');
-		lines.forEach((line) => {
-			statusNotice.appendChild(document.createTextNode(line));
-			statusNotice.appendChild(document.createElement('br'));
-		});
-	}
+    <!-- Inline JavaScript for handling game engine initialization -->
+    <script>
+        // Configuration object for the Godot engine
+        const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":32034480,"index.wasm":43016933},"focusCanvas":true,"gdextensionLibs":[]};
 
-	function displayFailureNotice(err) {
-		console.error(err);
-		if (err instanceof Error) {
-			setStatusNotice(err.message);
-		} else if (typeof err === 'string') {
-			setStatusNotice(err);
-		} else {
-			setStatusNotice('An unknown error occured');
-		}
-		setStatusMode('notice');
-		initializing = false;
-	}
+        // Indicates whether threading is enabled
+        const GODOT_THREADS_ENABLED = false;
 
-	const missing = Engine.getMissingFeatures({
-		threads: GODOT_THREADS_ENABLED,
-	});
+        // Creates a new Engine instance with the provided configuration
+        const engine = new Engine(GODOT_CONFIG);
 
-	if (missing.length !== 0) {
-		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
-			// There's a chance that installing the service worker would fix the issue
-			Promise.race([
-				navigator.serviceWorker.getRegistration().then((registration) => {
-					if (registration != null) {
-						return Promise.reject(new Error('Service worker already exists.'));
-					}
-					return registration;
-				}).then(() => engine.installServiceWorker()),
-				// For some reason, `getRegistration()` can stall
-				new Promise((resolve) => {
-					setTimeout(() => resolve(), 2000);
-				}),
-			]).catch((err) => {
-				console.error('Error while registering service worker:', err);
-			}).then(() => {
-				window.location.reload();
-			});
-		} else {
-			// Display the message as usual
-			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
-			displayFailureNotice(missingMsg + missing.join('\n'));
-		}
-	} else {
-		setStatusMode('progress');
-		engine.startGame({
-			'onProgress': function (current, total) {
-				if (current > 0 && total > 0) {
-					statusProgress.value = current;
-					statusProgress.max = total;
-				} else {
-					statusProgress.removeAttribute('value');
-					statusProgress.removeAttribute('max');
-				}
-			},
-		}).then(() => {
-			setStatusMode('hidden');
-		}, displayFailureNotice);
-	}
-}());
-		</script>
-	</body>
+        (function () {
+            // Get references to status overlay elements
+            const statusOverlay = document.getElementById('status');
+            const statusProgress = document.getElementById('status-progress');
+            const statusNotice = document.getElementById('status-notice');
+
+            let initializing = true; // Tracks if initialization is in progress
+            let statusMode = ''; // Tracks the current mode of the status overlay
+
+            // Function to update the status overlay's mode (hidden, progress, notice)
+            function setStatusMode(mode) {
+                if (statusMode === mode || !initializing) {
+                    return;
+                }
+                if (mode === 'hidden') {
+                    statusOverlay.remove(); // Remove overlay once initialization is complete
+                    initializing = false;
+                    return;
+                }
+                statusOverlay.style.visibility = 'visible';
+                statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
+                statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+                statusMode = mode;
+            }
+
+            // Function to update the notice text in the status overlay
+            function setStatusNotice(text) {
+                while (statusNotice.lastChild) {
+                    statusNotice.removeChild(statusNotice.lastChild);
+                }
+                const lines = text.split('\n');
+                lines.forEach((line) => {
+                    statusNotice.appendChild(document.createTextNode(line));
+                    statusNotice.appendChild(document.createElement('br'));
+                });
+            }
+
+            // Function to display an error message in the notice overlay
+            function displayFailureNotice(err) {
+                console.error(err);
+                if (err instanceof Error) {
+                    setStatusNotice(err.message);
+                } else if (typeof err === 'string') {
+                    setStatusNotice(err);
+                } else {
+                    setStatusNotice('An unknown error occurred');
+                }
+                setStatusMode('notice');
+                initializing = false;
+            }
+
+            // Check for missing features required by the engine
+            const missing = Engine.getMissingFeatures({
+                threads: GODOT_THREADS_ENABLED,
+            });
+
+            if (missing.length !== 0) {
+                // Attempt to fix missing features by installing a service worker, if applicable
+                if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+                    Promise.race([
+                        navigator.serviceWorker.getRegistration().then((registration) => {
+                            if (registration != null) {
+                                return Promise.reject(new Error('Service worker already exists.'));
+                            }
+                            return registration;
+                        }).then(() => engine.installServiceWorker()),
+                        new Promise((resolve) => {
+                            setTimeout(() => resolve(), 2000);
+                        }),
+                    ]).catch((err) => {
+                        console.error('Error while registering service worker:', err);
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    // Display error message for missing features
+                    const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
+                    displayFailureNotice(missingMsg + missing.join('\n'));
+                }
+            } else {
+                // Initialize the game and update progress
+                setStatusMode('progress');
+                engine.startGame({
+                    'onProgress': function (current, total) {
+                        if (current > 0 && total > 0) {
+                            statusProgress.value = current;
+                            statusProgress.max = total;
+                        } else {
+                            statusProgress.removeAttribute('value');
+                            statusProgress.removeAttribute('max');
+                        }
+                    },
+                }).then(() => {
+                    setStatusMode('hidden'); // Hide the overlay once loading is complete
+                }, displayFailureNotice);
+            }
+        }());
+    </script>
+</body>
 </html>
-
